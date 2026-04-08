@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Підсумкова робота з правознавства</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        :root { --legal-blue: #4a5d7e; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%); background-attachment: fixed; color: #2d3436; }
+        .clay-card { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border-radius: 35px; border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 15px 35px rgba(0,0,0,0.03); transition: transform 0.3s; }
+        .selected { background: #4a5d7e !important; color: white !important; }
+        .matched { opacity: 0.5; pointer-events: none; background: #e2e8f0 !important; }
+        .timer-warning { color: #e11d48; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-lg">
+        <div class="clay-card p-12 max-w-md w-full text-center">
+            <h1 class="text-3xl font-black text-slate-800 mb-2">Правознавство</h1>
+            <p class="text-slate-400 mb-10 text-sm font-medium">Підсумкова робота • 9 клас</p>
+            <form id="login-form" class="space-y-4">
+                <input type="text" id="user-name" required placeholder="Прізвище та Ім'я" class="w-full px-6 py-4 rounded-2xl bg-white border border-slate-100 outline-none focus:ring-4 focus:ring-slate-50 transition">
+                <input type="text" id="user-class" required placeholder="Клас" class="w-full px-6 py-4 rounded-2xl bg-white border border-slate-100 outline-none focus:ring-4 focus:ring-slate-50 transition">
+                <button type="submit" class="w-full py-5 bg-slate-800 text-white font-bold rounded-2xl hover:bg-black transition shadow-xl">Почати</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main UI -->
+    <nav class="sticky top-0 z-40 p-4 flex justify-center">
+        <div class="max-w-4xl w-full bg-white/70 backdrop-blur-md rounded-[28px] px-8 py-3 flex items-center justify-between shadow-sm border border-white/50">
+            <span id="nav-user" class="text-xs font-black text-slate-500 uppercase tracking-widest"></span>
+            <div id="timer" class="text-sm font-bold bg-white px-4 py-1.5 rounded-full border border-slate-50 shadow-inner">40:00</div>
+        </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto px-6 pt-10 pb-32">
+        <div id="test-root" class="space-y-20"></div>
+
+        <!-- Essay Block -->
+        <div id="essay-block" class="hidden mt-24 space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+            <div class="clay-card p-10">
+                <h3 class="text-2xl font-black text-slate-800 mb-6">Аналіз ситуації: Смартфон Максима</h3>
+                <p class="text-slate-500 text-sm leading-relaxed mb-8 italic">
+                    15-річний Максим працює кур’єром і хоче купити дорогий смартфон за свої зароблені гроші. Його батько категорично проти, стверджуючи, що Максим замалий для розпорядження грошима і має віддати їх у сім'ю. Оцініть правомірність вимог батька.
+                </p>
+                <textarea id="essay-input" rows="10" class="w-full p-8 rounded-[30px] border border-slate-100 bg-white/50 focus:ring-8 focus:ring-slate-50 transition outline-none text-slate-700 leading-relaxed" placeholder="Я вважаю, що в цій ситуації..."></textarea>
+                <button onclick="finishAndReport()" class="w-full mt-8 py-6 bg-slate-800 text-white font-black rounded-[30px] hover:bg-black transition-all active:scale-[0.98] shadow-2xl">ЗАВЕРШИТИ ТА ВІДПРАВИТИ ЗВІТ</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Results Modal -->
+    <div id="results-modal" class="hidden fixed inset-0 z-[60] bg-slate-50 flex items-center justify-center p-6">
+        <div class="clay-card p-16 max-w-xl w-full text-center">
+            <h2 class="text-4xl font-black text-slate-800 mb-8">Роботу завершено</h2>
+            <div class="grid grid-cols-2 gap-6 mb-10">
+                <div class="p-8 bg-white rounded-[40px] shadow-sm">
+                    <span class="text-[10px] font-black text-slate-300 uppercase block mb-1">Бали</span>
+                    <span id="res-score" class="text-3xl font-black text-slate-800">0</span>
+                </div>
+                <div class="p-8 bg-slate-800 rounded-[40px] shadow-xl">
+                    <span class="text-[10px] font-black text-slate-400 uppercase block mb-1">Оцінка</span>
+                    <span id="res-grade" class="text-5xl font-black text-white">0</span>
+                </div>
+            </div>
+            <p id="res-comment" class="text-slate-600 text-sm leading-relaxed italic"></p>
+            <p class="mt-8 text-[10px] text-slate-300 font-bold uppercase tracking-widest">Звіт автоматично надіслано вчителю</p>
+        </div>
+    </div>
+
+    <script>
+        const PROXY_URL = 'https://script.google.com/macros/s/AKfycbzr5qlWKKgCEXdHdi49pEly9BurpAqL7HRMIfBqLPWRdOhLR3Li9_c3wqSnt3FmZZyq/exec';
+
+        const data = [
+            {
+                title: "Права та Праця",
+                questions: [
+                    { id: 'q1', type: 'scq', text: "З якого віку за згодою батьків можна почати працювати (легка праця)?", opts: ["З 14 років", "З 15 років", "З 16 років"], correct: 1 },
+                    { id: 'q2', type: 'scq', text: "Яким документом підліток 14-18 років розпоряджається самостійно?", opts: ["Заробіток / Стипендія", "Свідоцтво про народження", "Майно батьків"], correct: 0 },
+                    { id: 'q3', type: 'mcq', text: "Оберіть ДВА права неповнолітньої дитини (14-18 років):", opts: ["Продавати житло самостійно", "Розпоряджатися доходом", "Укладати дрібні побутові угоди", "Брати участь у виборах"], correct: [1, 2] },
+                    { id: 'q4', type: 'match', text: "Встановіть відповідність:", pairs: [
+                        { l: "15 років", r: "Праця за згодою" },
+                        { l: "31 день", r: "Відпустка підлітка" },
+                        { l: "173 ст. СК", r: "Роздільність майна" },
+                        { l: "Нічні зміни", r: "Заборонено до 18" }
+                    ]}
+                ]
+            }
+        ];
+
+        let state = { name: '', group: '', points: 0, finishedQ: 0, timeLeft: 40 * 60, active: false };
+        let matchSelection = null;
+
+        document.getElementById('login-form').onsubmit = (e) => {
+            e.preventDefault();
+            state.name = document.getElementById('user-name').value;
+            state.group = document.getElementById('user-class').value;
+            state.active = true;
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('nav-user').textContent = `${state.name} | ${state.group}`;
+            initTest();
+            startTimer();
+        };
+
+        function startTimer() {
+            const timer = setInterval(() => {
+                if (!state.active) { clearInterval(timer); return; }
+                state.timeLeft--;
+                const m = Math.floor(state.timeLeft / 60);
+                const s = state.timeLeft % 60;
+                const el = document.getElementById('timer');
+                el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+                if (state.timeLeft <= 300) el.classList.add('timer-warning');
+                if (state.timeLeft <= 0) finishAndReport(true);
+            }, 1000);
+        }
+
+        function initTest() {
+            const root = document.getElementById('test-root');
+            data.forEach((mod, mIdx) => {
+                const sec = document.createElement('section');
+                sec.innerHTML = `<h2 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-10 text-center">${mod.title}</h2><div id="m-${mIdx}" class="space-y-10"></div>`;
+                root.appendChild(sec);
+                mod.questions.forEach((q, qIdx) => renderQ(mIdx, qIdx, q));
+            });
+        }
+
+        function renderQ(mIdx, qIdx, q) {
+            const card = document.createElement('div');
+            card.className = "clay-card p-10";
+            card.innerHTML = `<p class="font-bold text-slate-800 mb-8">${qIdx + 1}. ${q.text}</p>`;
+
+            if (q.type === 'scq' || q.type === 'mcq') {
+                const grid = document.createElement('div');
+                grid.className = "space-y-3";
+                q.opts.forEach((opt, oIdx) => {
+                    const b = document.createElement('button');
+                    b.id = `btn-${mIdx}-${qIdx}-${oIdx}`;
+                    b.className = "w-full text-left p-5 rounded-2xl bg-white border border-slate-50 text-slate-600 font-medium transition-all hover:border-slate-200";
+                    b.textContent = opt;
+                    b.onclick = () => handleChoice(mIdx, qIdx, oIdx, q.type);
+                    grid.appendChild(b);
+                });
+                card.appendChild(grid);
+            } else {
+                const mDiv = document.createElement('div');
+                mDiv.className = "grid grid-cols-2 gap-4";
+                mDiv.innerHTML = `<div id="L-${mIdx}-${qIdx}" class="space-y-2"></div><div id="R-${mIdx}-${qIdx}" class="space-y-2"></div>`;
+                card.appendChild(mDiv);
+                setupMatch(mIdx, qIdx, q.pairs);
+            }
+            document.getElementById(`m-${mIdx}`).appendChild(card);
+        }
+
+        function handleChoice(mIdx, qIdx, oIdx, type) {
+            const q = data[mIdx].questions[qIdx];
+            if (q.done) return;
+            const btn = document.getElementById(`btn-${mIdx}-${qIdx}-${oIdx}`);
+
+            if (type === 'scq') {
+                q.done = true;
+                if (oIdx === q.correct) state.points += 8;
+                btn.classList.add('selected');
+                checkProgress();
+            } else {
+                if (!q.sel) q.sel = [];
+                if (q.sel.includes(oIdx)) {
+                    q.sel = q.sel.filter(x => x !== oIdx);
+                    btn.classList.remove('selected');
+                } else if (q.sel.length < 2) {
+                    q.sel.push(oIdx);
+                    btn.classList.add('selected');
+                }
+                if (q.sel.length === 2) {
+                    q.done = true;
+                    const hits = q.sel.filter(x => q.correct.includes(x)).length;
+                    state.points += (hits * 4);
+                    checkProgress();
+                }
+            }
+        }
+
+        function setupMatch(mIdx, qIdx, pairs) {
+            const L = document.getElementById(`L-${mIdx}-${qIdx}`);
+            const R = document.getElementById(`R-${mIdx}-${qIdx}`);
+            const shuffled = [...pairs].sort(() => Math.random() - 0.5);
+
+            pairs.forEach((p, i) => {
+                const d = document.createElement('div');
+                d.className = "p-4 bg-white rounded-xl border border-slate-50 text-xs font-bold text-slate-700 cursor-pointer";
+                d.textContent = p.l;
+                d.onclick = () => {
+                    if (matchSelection) matchSelection.el.classList.remove('selected');
+                    matchSelection = { side: 'L', id: i, el: d, mIdx, qIdx };
+                    d.classList.add('selected');
+                };
+                L.appendChild(d);
+            });
+
+            shuffled.forEach(p => {
+                const d = document.createElement('div');
+                d.className = "p-4 bg-white rounded-xl border border-slate-50 text-xs text-slate-500 cursor-pointer";
+                d.textContent = p.r;
+                d.onclick = () => {
+                    if (matchSelection && matchSelection.side === 'L' && matchSelection.mIdx === mIdx && matchSelection.qIdx === qIdx) {
+                        const q = data[mIdx].questions[qIdx];
+                        if (q.pairs[matchSelection.id].r === p.r) state.points += 2;
+                        d.classList.add('matched');
+                        matchSelection.el.classList.add('matched');
+                        if (!q.matches) q.matches = 0;
+                        q.matches++;
+                        if (q.matches === 4) { q.done = true; checkProgress(); }
+                        matchSelection = null;
+                    }
+                };
+                R.appendChild(d);
+            });
+        }
+
+        function checkProgress() {
+            state.finishedQ++;
+            if (state.finishedQ === 4) {
+                document.getElementById('essay-block').classList.remove('hidden');
+                document.getElementById('essay-block').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        async function finishAndReport(isAuto = false) {
+            state.active = false;
+            const essayText = document.getElementById('essay-input').value;
+            
+            // Logic for Essay analysis
+            let essayScore = 0;
+            const val = essayText.toLowerCase();
+            const markers = ['32', '188', '173', 'згод', 'власн', 'самост', 'дієздат'];
+            markers.forEach(m => { if (val.includes(m)) essayScore += 2; });
+            state.points += Math.min(16, essayScore);
+
+            const finalScore = Math.min(48, Math.round(state.points));
+            const grade = Math.round((finalScore / 48) * 12);
+
+            // 1. Show UI results
+            document.getElementById('results-modal').classList.remove('hidden');
+            document.getElementById('res-score').textContent = `${finalScore} / 48`;
+            document.getElementById('res-grade').textContent = grade;
+            
+            const comments = [
+                "Чудовий результат! Ви впевнено володієте знаннями про свої права.",
+                "Гарна робота. Зверніть увагу на точні формулювання статей кодексів.",
+                "Базовий рівень. Рекомендуємо перечитати розділи про працю та цивільні права."
+            ];
+            document.getElementById('res-comment').textContent = grade >= 10 ? comments[0] : (grade >= 7 ? comments[1] : comments[2]);
+
+            // 2. Telegram Report via Webhook
+            const message = `
+📊 <b>НОВИЙ ЗВІТ З ПРАВОЗНАВСТВА</b>
+━━━━━━━━━━━━━━━━━━
+👤 <b>Учень:</b> ${state.name}
+🏫 <b>Клас:</b> ${state.group}
+💰 <b>Бали:</b> ${finalScore} / 48
+🎓 <b>ОЦІНКА: ${grade}</b>
+━━━━━━━━━━━━━━━━━━
+📝 <b>ТЕКСТ ЕСЕ:</b>
+<i>${essayText.substring(0, 1000)}</i>
+            `;
+
+            try {
+                await fetch(PROXY_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ message: message })
+                });
+            } catch (err) {
+                console.error("Report failed:", err);
+            }
+        }
+    </script>
+</body>
+</html>
