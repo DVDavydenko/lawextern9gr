@@ -44,7 +44,6 @@
         .timer-warning { color: #e11d48; animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         
-        /* Скролбар */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -52,7 +51,6 @@
 </head>
 <body class="min-h-screen">
 
-    <!-- Авторизація -->
     <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-white/40 backdrop-blur-md p-4">
         <div class="clay-card p-10 max-w-md w-full text-center">
             <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner">⚖️</div>
@@ -66,7 +64,6 @@
         </div>
     </div>
 
-    <!-- Навігація та Таймер -->
     <nav class="sticky top-0 z-40 p-4 flex justify-center pointer-events-none">
         <div class="pointer-events-auto max-w-4xl w-full bg-white/80 backdrop-blur-xl rounded-full px-8 py-3 flex items-center justify-between shadow-sm border border-white">
             <div class="flex items-center gap-3">
@@ -77,7 +74,6 @@
         </div>
     </nav>
 
-    <!-- Прогрес -->
     <div class="max-w-3xl mx-auto px-6 mt-6">
         <div class="flex justify-between items-center mb-2">
             <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Прогрес</span>
@@ -91,7 +87,6 @@
     <main class="max-w-3xl mx-auto px-6 pt-10 pb-32">
         <div id="test-root" class="space-y-16"></div>
 
-        <!-- Есе -->
         <div id="essay-block" class="hidden mt-20 animate-in fade-in slide-in-from-bottom-10 duration-700">
             <div class="clay-card p-10 border-2 border-indigo-50/50 relative overflow-hidden">
                 <div class="absolute -right-10 -top-10 text-9xl opacity-5">📝</div>
@@ -112,7 +107,6 @@
         </div>
     </main>
 
-    <!-- Результат -->
     <div id="results-modal" class="hidden fixed inset-0 z-[60] bg-slate-50 flex items-center justify-center p-6 overflow-y-auto">
         <div class="clay-card p-12 max-w-lg w-full text-center relative overflow-hidden">
             <h2 class="text-4xl font-black text-slate-800 mb-2">Роботу завершено</h2>
@@ -131,7 +125,7 @@
             
             <div id="res-comment" class="bg-indigo-50 text-indigo-900 p-6 rounded-2xl text-sm font-medium leading-relaxed text-left border border-indigo-100 mb-8"></div>
             
-            <p id="sending-status" class="text-xs font-bold text-slate-400 uppercase tracking-widest">✅ Звіт автоматично надіслано вчителю</p>
+            <p id="sending-status" class="text-xs font-bold text-slate-400 uppercase tracking-widest">⏳ Звіт надсилається вчителю...</p>
         </div>
     </div>
 
@@ -214,7 +208,7 @@
         ];
 
         let state = { name: '', group: '', points: 0, answeredQ: 0, timeLeft: 40 * 60, active: false };
-        const totalQ = 20; // 5 модулів * 4 питання
+        const totalQ = 20; // 5 модулів по 4 питання
         let activeMatchLeft = null;
 
         document.getElementById('login-form').onsubmit = (e) => {
@@ -247,9 +241,9 @@
                 const sec = document.createElement('section');
                 sec.innerHTML = `
                     <div class="flex items-center gap-4 mb-8">
-                        <div class="h-px bg-slate-200 flex-1"></div>
-                        <h2 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">${mod.title}</h2>
-                        <div class="h-px bg-slate-200 flex-1"></div>
+                        <div class="h-px bg-slate-300/50 flex-1"></div>
+                        <h2 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">${mod.title}</h2>
+                        <div class="h-px bg-slate-300/50 flex-1"></div>
                     </div>
                     <div id="m-${mIdx}" class="space-y-6"></div>`;
                 root.appendChild(sec);
@@ -276,8 +270,8 @@
                 card.appendChild(grid);
             } else {
                 const hint = document.createElement('p');
-                hint.className = "text-xs text-slate-400 font-bold uppercase mb-4";
-                hint.textContent = "Клікніть елемент зліва, а потім відповідний елемент справа";
+                hint.className = "text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-4";
+                hint.textContent = "👆 Клікніть поняття зліва, а потім відповідне йому значення справа";
                 card.appendChild(hint);
 
                 const mDiv = document.createElement('div');
@@ -296,7 +290,7 @@
 
             if (type === 'scq') {
                 q.done = true;
-                if (oIdx === q.correct) state.points += 1; // 1 бал за SCQ
+                if (oIdx === q.correct) state.points += 1; // 1 бал за правильну SCQ
                 btn.classList.add('selected');
                 updateProgress();
             } else {
@@ -311,7 +305,7 @@
                 if (q.sel.length === 2) {
                     q.done = true;
                     const hits = q.sel.filter(x => q.correct.includes(x)).length;
-                    state.points += hits; // 1 бал за кожну правильну відповідь (макс 2)
+                    state.points += hits; // 1 бал за кожну правильну (макс 2)
                     updateProgress();
                 }
             }
@@ -321,7 +315,6 @@
             const L = document.getElementById(`L-${mIdx}-${qIdx}`);
             const R = document.getElementById(`R-${mIdx}-${qIdx}`);
             
-            // Перемішуємо правий стовпчик
             const shuffledR = pairs.map((p, originalIndex) => ({ text: p.r, originalIndex })).sort(() => Math.random() - 0.5);
 
             pairs.forEach((p, i) => {
@@ -329,7 +322,7 @@
                 d.className = "matching-item";
                 d.textContent = p.l;
                 d.onclick = () => {
-                    if (data[mIdx].questions[qIdx].done) return;
+                    if (data[mIdx].questions[qIdx].done || d.classList.contains('matched')) return;
                     if (activeMatchLeft) activeMatchLeft.el.classList.remove('active-left');
                     activeMatchLeft = { id: i, el: d, mIdx, qIdx };
                     d.classList.add('active-left');
@@ -343,14 +336,12 @@
                 d.textContent = p.text;
                 d.onclick = () => {
                     const q = data[mIdx].questions[qIdx];
-                    if (q.done || !activeMatchLeft || activeMatchLeft.mIdx !== mIdx || activeMatchLeft.qIdx !== qIdx) return;
+                    if (q.done || d.classList.contains('matched') || !activeMatchLeft || activeMatchLeft.mIdx !== mIdx || activeMatchLeft.qIdx !== qIdx) return;
                     
-                    // Перевіряємо чи правильна пара
                     if (activeMatchLeft.id === p.originalIndex) {
                         state.points += 1; // 1 бал за правильну пару
                     }
                     
-                    // Блокуємо використані елементи
                     d.classList.add('matched');
                     activeMatchLeft.el.classList.add('matched');
                     activeMatchLeft.el.classList.remove('active-left');
@@ -358,7 +349,7 @@
                     if (!q.matches) q.matches = 0;
                     q.matches++;
                     
-                    activeMatchLeft = null; // Скидаємо вибір
+                    activeMatchLeft = null;
                     
                     if (q.matches === 4) { 
                         q.done = true; 
@@ -375,9 +366,11 @@
             document.getElementById('progress-bar').style.width = `${pct}%`;
             document.getElementById('progress-text').textContent = `${state.answeredQ} / ${totalQ}`;
             
+            // ПЕРЕВІРКА: чи виконано всі 20 питань
             if (state.answeredQ === totalQ) {
                 const eb = document.getElementById('essay-block');
                 eb.classList.remove('hidden');
+                // Плавно прокручуємо до есе через 300мс
                 setTimeout(() => eb.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
             }
         }
@@ -386,11 +379,9 @@
             state.active = false;
             const essayText = document.getElementById('essay-input').value.trim();
             
-            // Інтелектуальний підрахунок балів за есе (макс 8)
             let essayScore = 0;
             const val = essayText.toLowerCase();
             
-            // Ключові статті та поняття
             if (val.includes('188')) essayScore += 1.5;
             if (val.includes('32')) essayScore += 1.5;
             if (val.includes('173')) essayScore += 1.5;
@@ -399,14 +390,13 @@
             if (val.includes('заробіток') || val.includes('гроші')) essayScore += 0.5;
             if (val.includes('самост') || val.includes('розпорядж')) essayScore += 0.5;
             if (val.includes('утримув')) essayScore += 0.5;
-            if (val.length > 250) essayScore += 0.5; // Бонус за розгорнутість
+            if (val.length > 250) essayScore += 0.5;
 
             state.points += Math.min(8, essayScore);
 
             const finalScore = Math.min(48, Math.round(state.points));
             const grade = Math.round((finalScore / 48) * 12);
 
-            // Відображення результатів учню
             document.getElementById('results-modal').classList.remove('hidden');
             document.getElementById('res-name').textContent = `${state.name} (${state.group})`;
             document.getElementById('res-score').textContent = finalScore;
@@ -420,8 +410,8 @@
             if (isAuto) feedback = "<span class='text-red-500 font-bold'>ЧАС ВИЧЕРПАНО.</span> " + feedback;
             document.getElementById('res-comment').innerHTML = feedback;
 
-            // Відправка звіту в Telegram через Webhook
-            document.getElementById('sending-status').textContent = "⏳ Надсилання звіту вчителю...";
+            // Відправка звіту
+            const statusEl = document.getElementById('sending-status');
             
             const message = `
 📝 <b>СЕМЕСТРОВЕ ОЦІНЮВАННЯ | 9 КЛАС</b>
@@ -433,7 +423,7 @@
 ⏱ <b>Залишок часу:</b> ${Math.floor(state.timeLeft/60)} хв
 ━━━━━━━━━━━━━━━━━━━━
 ✍️ <b>ВІДПОВІДЬ НА КЕЙС:</b>
-<i>${essayText ? essayText.substring(0, 800) + (essayText.length > 800 ? '...' : '') : 'Відповідь не надано'}</i>
+<i>${essayText ? essayText.substring(0, 1000) + (essayText.length > 1000 ? '...' : '') : 'Відповідь не надано'}</i>
             `;
 
             try {
@@ -442,9 +432,11 @@
                     mode: 'no-cors',
                     body: JSON.stringify({ message: message })
                 });
-                document.getElementById('sending-status').innerHTML = "✅ Звіт <b>успішно</b> надіслано вчителю";
+                statusEl.innerHTML = "✅ Звіт автоматично надіслано вчителю";
+                statusEl.classList.replace('text-slate-400', 'text-emerald-500');
             } catch (err) {
-                document.getElementById('sending-status').innerHTML = "⚠️ Помилка відправки, але результат збережено локально.";
+                statusEl.innerHTML = "⚠️ Помилка відправки, але результат збережено локально.";
+                statusEl.classList.replace('text-slate-400', 'text-amber-500');
             }
         }
     </script>
